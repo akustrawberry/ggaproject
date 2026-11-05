@@ -1,36 +1,97 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Legakan — Panduan Gastrik, GERD & Anxiety
 
-## Getting Started
+Platform pendidikan kesihatan dalam Bahasa Melayu untuk membantu masyarakat Malaysia memahami dan mengurus **Gastrik**, **GERD** dan **Anxiety**.
 
-First, run the development server:
+> ⚠️ **Penafian Perubatan:** Kandungan di website ini adalah untuk tujuan pendidikan sahaja. Ia **bukan** pengganti nasihat, diagnosis atau rawatan daripada doktor atau profesional kesihatan.
+
+## Tech Stack
+
+- **Next.js 16** (App Router) + React 19 + TypeScript
+- **Tailwind CSS v4**
+- **Prisma 6** + SQLite (pembangunan) — mudah ditukar ke PostgreSQL untuk production
+- **bcryptjs** + **jose** untuk pengesahan admin
+- **react-markdown** untuk kandungan artikel
+
+## Pemasangan
+
+### Keperluan
+
+- Node.js 20+ dan npm
+
+### Langkah-langkah
 
 ```bash
+# 1. Clone repository
+git clone https://github.com/akustrawberry/ggaproject.git
+cd ggaproject
+
+# 2. Install dependencies
+npm install
+
+# 3. Sediakan fail .env
+cp .env.example .env
+# Edit .env — tetapkan SESSION_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD
+
+# 4. Jana Prisma Client dan database
+db push      # atau: npx prisma generate && npx prisma db push
+
+# 5. Seed data (kategori, artikel, FAQ, admin user)
+node prisma/seed.mjs
+
+# 6. Jalankan development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Buka [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+> **Nota:** Jika `npm install` memaparkan amaran `install-scripts ... allowScripts`,
+> jalankan `npx prisma generate` secara manual selepas install — postinstall Prisma telah disekat.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Akaun Admin
 
-## Learn More
+Selepas seed, log masuk di `/admin/login` menggunakan `ADMIN_EMAIL` dan `ADMIN_PASSWORD` daripada `.env`
+(lalai: `admin@legakan.my` / `legakan123` — **tukar dalam production!**).
 
-To learn more about Next.js, take a look at the following resources:
+## Struktur Projek
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+src/
+  app/
+    page.tsx                  # Laman utama
+    artikel/                  # Senarai & butiran artikel
+    kategori/[slug]/          # Halaman kategori
+    alat/                     # Alat wellness (pernafasan, diari, checklist)
+    soal-jawab/               # FAQ
+    admin/                    # Dashboard admin (login + panel)
+    api/                      # API routes (newsletter, auth)
+    sitemap.ts, robots.ts     # SEO
+  components/                 # Komponen UI & interaktif
+  lib/                        # Prisma client, auth, utiliti, pemalar
+prisma/
+  schema.prisma               # Skema database
+  seed.mjs                    # Data benih
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Ciri-ciri
 
-## Deploy on Vercel
+- Artikel dengan Markdown, kategori, tag, SEO fields, related articles
+- Carian artikel, breadcrumb, anggaran masa bacaan, schema.org JSON-LD
+- Alat wellness: latihan pernafasan 4-7-8, diari makanan (localStorage), senarai semak harian
+- Buletin e-mel dengan rate limiting
+- Admin dashboard: CRUD artikel/kategori/tag/FAQ, pengurusan pelanggan, statistik tontonan
+- Responsive, mobile-first, Bahasa Melayu
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Deployment (Vercel)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Push ke GitHub dan import ke [Vercel](https://vercel.com).
+2. Tetapkan environment variables: `DATABASE_URL`, `SESSION_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `NEXT_PUBLIC_SITE_URL`.
+3. Untuk PostgreSQL: tukar `provider` dalam `prisma/schema.prisma` kepada `postgresql`, kemas kini `DATABASE_URL`, jalankan `npx prisma db push` dan `node prisma/seed.mjs`.
+4. **Penting:** SQLite tidak sesuai untuk serverless production — gunakan PostgreSQL atau SQLite pada VPS dengan persistent disk.
+
+## Keselamatan
+
+- Kata laluan di-hash dengan bcrypt
+- Session JWT httpOnly + sameSite
+- Rate limiting pada API newsletter & login
+- Admin routes dilindungi server-side
+- Data diari wellness kekal di pelayar pengguna (localStorage) — tidak dihantar ke pelayan
