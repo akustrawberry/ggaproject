@@ -8,7 +8,7 @@ Platform pendidikan kesihatan dalam Bahasa Melayu untuk membantu masyarakat Mala
 
 - **Next.js 16** (App Router) + React 19 + TypeScript
 - **Tailwind CSS v4**
-- **Prisma 6** + SQLite (pembangunan) — mudah ditukar ke PostgreSQL untuk production
+- **Prisma 6** + PostgreSQL
 - **bcryptjs** + **jose** untuk pengesahan admin
 - **react-markdown** untuk kandungan artikel
 
@@ -81,12 +81,26 @@ prisma/
 - Admin dashboard: CRUD artikel/kategori/tag/FAQ, pengurusan pelanggan, statistik tontonan
 - Responsive, mobile-first, Bahasa Melayu
 
-## Deployment (Vercel)
+## Deployment (Vercel + PostgreSQL)
 
-1. Push ke GitHub dan import ke [Vercel](https://vercel.com).
-2. Tetapkan environment variables: `DATABASE_URL`, `SESSION_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `NEXT_PUBLIC_SITE_URL`.
-3. Untuk PostgreSQL: tukar `provider` dalam `prisma/schema.prisma` kepada `postgresql`, kemas kini `DATABASE_URL`, jalankan `npx prisma db push` dan `node prisma/seed.mjs`.
-4. **Penting:** SQLite tidak sesuai untuk serverless production — gunakan PostgreSQL atau SQLite pada VPS dengan persistent disk.
+1. **Sediakan PostgreSQL** — cara paling mudah: cipta akaun percuma di [Neon](https://neon.tech) atau [Supabase](https://supabase.com), cipta database, dan dapatkan connection string (`postgresql://...`).
+
+2. **Kemas kini `.env` tempatan** dengan `DATABASE_URL` PostgreSQL tersebut, kemudian:
+   ```bash
+   npx prisma generate
+   npx prisma db push
+   node prisma/seed.mjs
+   ```
+
+3. **Push ke GitHub** dan import projek ke [Vercel](https://vercel.com).
+
+4. **Tetapkan Environment Variables** dalam Vercel → Project → Settings → Environment Variables:
+   - `DATABASE_URL` — connection string PostgreSQL (untuk migrasi, gunakan endpoint *direct/non-pooling* jika Neon)
+   - `SESSION_SECRET` — string rawak yang panjang
+   - `ADMIN_EMAIL`, `ADMIN_PASSWORD`
+   - `NEXT_PUBLIC_SITE_URL` — `https://your-app.vercel.app`
+
+5. **Redeploy.** Prisma Client dijana automatik semasa `npm install` di Vercel.
 
 ## Keselamatan
 
